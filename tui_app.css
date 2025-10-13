@@ -1,0 +1,34 @@
+Container {
+    width: 80%;
+    height: 80%;
+    border: heavy #646464; /* Using a neutral grey for accent */
+    padding: 1 2;
+}
+
+
+TextArea {
+    border: round #6c757d; /* Using a darker grey for secondary */
+    margin-bottom: 1;
+    height: 1fr;
+}
+
+#commands_display {
+    background: #343a40; /* Darker surface */
+    height: auto;
+    min-height: 1;
+}
+
+#explanation_display {
+    background: #212529; /* Even darker surface */
+}
+
+#command_input {
+    height: auto;
+    min-height: 3;
+    max-height: 10;
+}
+
+Screen {
+    align: center middle;
+}
+
