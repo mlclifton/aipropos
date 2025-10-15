@@ -23,8 +23,8 @@ The solution consists of two main Python components: `main.py` which implements 
     *   It uses `pyperclip` for clipboard operations.
 
 *   **`llm_service.py`**: This file defines the `LLMService` class, responsible for interacting with the Large Language Model.
-    *   It loads the LLM API key from environment variables using `dotenv`.
-    *   The `get_commands` method is a placeholder for an actual LLM API call. In a real implementation, this method would send the user's natural language query to an LLM and parse its response to extract the generated commands and their explanations. Currently, it provides hardcoded responses based on simple keyword matching.
+    *   It loads the Ollama API URL and model name from environment variables using `dotenv`.
+    *   The `get_commands` method now makes an actual API call to the configured Ollama instance, sending the user's natural language query and a system prompt. It then parses the Ollama's response to extract the generated commands and their explanations, handling various error conditions.
 
 *   **`tui_app.css`**: This CSS file styles the Textual application, defining the appearance of containers and text areas.
 
@@ -39,6 +39,7 @@ graph TD
     A --> D[pyperclip]
     B --> E[os]
     B --> F[dotenv]
+    B --> G[ollama]
 ```
 
 #### Class Associations
@@ -58,4 +59,5 @@ graph TD
     C[pyperclip] --> B
     D[dotenv] --> E[llm_service.py]
     F[os] --> E
+    G[ollama] --> E
 ```

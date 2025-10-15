@@ -39,7 +39,7 @@ The utility shall integrate with an LLM API to:
 *   **Language**: Python
 *   **UI Framework**: Textual
 *   **Clipboard**: `pyperclip` library
-*   **LLM Integration**: (To be determined, placeholder in `llm_service.py`)
+*   **LLM Integration**: Ollama (via `ollama` Python client library)
 
 ## 5. Non-Functional Requirements
 

@@ -1,2 +1,6 @@
 textual
 python-dotenv
+tomli
+httpx
+ollama
+pyperclip
