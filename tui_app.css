@@ -1,3 +1,5 @@
+/* stylelint-disable selector-type-case, selector-type-no-unknown, declaration-property-value-no-unknown */
+
 Container {
     width: 80%;
     height: 80%;
@@ -29,6 +31,7 @@ TextArea {
 }
 
 Screen {
+    /* stylelint-disable-next-line property-no-unknown */
     align: center middle;
 }
 
