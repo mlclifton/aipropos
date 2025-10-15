@@ -5,6 +5,7 @@ from textual.reactive import var
 from textual.events import Key
 from llm_service import LLMService
 import pyperclip
+from datetime import datetime
 
 class LogViewer(TextArea):
     BINDINGS = [("escape", "hide_logs", "Hide Logs")]
@@ -22,7 +23,7 @@ class TUIApp(App):
     llm_service = LLMService()
     commands = var("")
     explanation = var("")
-    log_messages = []
+    log_messages = [] # Stores (timestamp, message) tuples
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -34,8 +35,9 @@ class TUIApp(App):
         yield Footer()
 
     def _log_and_notify(self, message: str) -> None:
-        self.log_messages.append(message)
-        self.notify(message)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.log_messages.append((timestamp, message))
+        self.notify(f"[{timestamp}] {message}")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id == "command_input":
@@ -62,8 +64,12 @@ class TUIApp(App):
                 self.query_one("#command_input", Input).clear()
 
     def action_show_logs(self) -> None:
-        log_viewer = LogViewer("\n".join(self.log_messages), id="log_viewer", read_only=True)
-        self.app.mount(log_viewer)
+        formatted_logs = []
+        for timestamp, message in reversed(self.log_messages):
+            formatted_logs.append(f"[{timestamp}] {message}")
+        separated_logs = "\n" + "\n---\n".join(formatted_logs)
+        log_viewer = LogViewer(separated_logs, id="log_viewer", read_only=True)
+        self.screen.mount(log_viewer)
         log_viewer.add_class("-modal")
 
     def action_copy_commands(self) -> None:
