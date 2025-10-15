@@ -19,16 +19,19 @@ class LLMService:
     def get_commands(self, prompt: str) -> tuple[str, str]:
         try:
             client = ollama.Client(host=self.ollama_api_base_url)
+            messages_payload = [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": prompt},
+            ]
+
             response = client.chat(
                 model=self.ollama_model_name,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
+                messages=messages_payload,
                 stream=False
             )
 
             content = response["message"]["content"].strip()
+            diagnostic_message = f"Sent: {messages_payload}"
             
             # Attempt to parse the command and explanation
             if content.startswith("```bash") and "```" in content:
@@ -42,14 +45,14 @@ class LLMService:
                     else:
                         command = command_block.strip() # Fallback if only one line
                     explanation = parts[2].strip()
-                    return command, explanation
+                    return command, explanation, diagnostic_message, content
                 else:
-                    return "", f"Ollama response format unexpected: {content}"
+                    return "", f"Ollama response format unexpected: {content}", diagnostic_message, content
             else:
                 # Fallback if the format is not as expected
-                return "", f"Ollama response format unexpected: {content}"
+                return "", f"Ollama response format unexpected: {content}", diagnostic_message, content
 
         except ollama.ResponseError as e:
-            return "", f"Ollama API Error: {e.status_code} - {str(e)}"
+            return "", f"Ollama API Error: {e.status_code} - {str(e)}", f"Sent: {messages_payload}", ""
         except Exception as e:
-            return "", f"Error communicating with Ollama: {e}"
+            return "", f"Error communicating with Ollama: {e}", f"Sent: {messages_payload}", ""

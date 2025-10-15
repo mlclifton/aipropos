@@ -35,3 +35,12 @@ Screen {
     align: center middle;
 }
 
+.-modal {
+    align: center middle;
+    background: $panel;
+    border: thick $accent;
+    padding: 1;
+    width: 80%;
+    height: 80%;
+    layer: dialog;
+}
