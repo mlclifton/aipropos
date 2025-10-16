@@ -44,21 +44,21 @@ class TUIApp(App):
             user_query = event.value
             if user_query:
                 self._log_and_notify("Sending request to Ollama...")
-                self.commands, self.explanation, diagnostic_message, raw_ollama_response = self.llm_service.get_commands(user_query)
+                parsed_json, error_message, diagnostic_message, raw_ollama_response = self.llm_service.get_commands(user_query)
                 self._log_and_notify("Received response from Ollama.")
                 self._log_and_notify(diagnostic_message)
                 self._log_and_notify(f"Raw Ollama Response: {raw_ollama_response}")
 
-                if not self.commands and self.explanation:
-                    # If no command but there's an explanation (likely an error or unexpected format)
-                    self.query_one("#commands_display", TextArea).text = "Error or unexpected response." 
-                    self.query_one("#explanation_display", TextArea).text = f"Details: {self.explanation}"
-                elif self.commands:
+                if parsed_json:
+                    self.commands = "\n".join(parsed_json.get("commands", []))
+                    self.explanation = parsed_json.get("explanation", "No explanation provided.")
                     self.query_one("#commands_display", TextArea).text = self.commands
                     self.query_one("#explanation_display", TextArea).text = self.explanation
                 else:
-                    self.query_one("#commands_display", TextArea).text = "No command generated."
-                    self.query_one("#explanation_display", TextArea).text = "Ollama did not provide a command or explanation."
+                    self.commands = ""
+                    self.explanation = error_message
+                    self.query_one("#commands_display", TextArea).text = "Error or unexpected response."
+                    self.query_one("#explanation_display", TextArea).text = f"Details: {error_message}"
 
                 self.query_one("#commands_display").focus()
                 self.query_one("#command_input", Input).clear()

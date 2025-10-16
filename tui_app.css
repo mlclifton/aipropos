@@ -39,6 +39,7 @@ Screen {
 }
 
 .-modal {
+    /* stylelint-disable-next-line property-no-unknown */
     align: center middle;
     /* stylelint-disable-next-line */
     background: $panel;
@@ -47,5 +48,6 @@ Screen {
     padding: 1;
     width: 80%;
     height: 80%;
+    /* stylelint-disable-next-line property-no-unknown */
     layer: dialog;
 }
