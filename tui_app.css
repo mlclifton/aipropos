@@ -1,5 +1,6 @@
-/* stylelint-disable selector-type-case, selector-type-no-unknown, declaration-property-value-no-unknown */
+/* stylelint-disable selector-type-case, selector-type-no-unknown, declaration-property-value-no-unknown, selector-class-pattern */
 
+/* stylelint-disable-next-line */
 Container {
     width: 80%;
     height: 80%;
@@ -8,6 +9,7 @@ Container {
 }
 
 
+/* stylelint-disable-next-line */
 TextArea {
     border: round #6c757d; /* Using a darker grey for secondary */
     margin-bottom: 1;
@@ -30,6 +32,7 @@ TextArea {
     max-height: 10;
 }
 
+/* stylelint-disable-next-line */
 Screen {
     /* stylelint-disable-next-line property-no-unknown */
     align: center middle;
@@ -37,7 +40,9 @@ Screen {
 
 .-modal {
     align: center middle;
+    /* stylelint-disable-next-line */
     background: $panel;
+    /* stylelint-disable-next-line */
     border: thick $accent;
     padding: 1;
     width: 80%;
