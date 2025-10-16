@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Input, TextArea, Collapsible
+from textual.widgets import Header, Footer, Input, TextArea
 from textual.containers import Container
 from textual.reactive import var
 from textual.events import Key
@@ -30,8 +30,7 @@ class TUIApp(App):
         with Container():
             yield Input(placeholder="Enter your command request here...", id="command_input")
             yield TextArea(placeholder="Generated Commands", id="commands_display", read_only=True)
-            with Collapsible(title="Explanation", collapsed=True):
-                yield TextArea(placeholder="Explanation", id="explanation_display", read_only=True)
+            yield TextArea(placeholder="Explanation", id="explanation_display", read_only=True)
         yield Footer()
 
     def _log_and_notify(self, message: str) -> None:
