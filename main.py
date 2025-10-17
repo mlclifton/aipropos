@@ -38,27 +38,36 @@ class TUIApp(App):
         self.log_messages.append((timestamp, message))
         self.notify(f"[{timestamp}] {message}")
 
+    def _call_llm_service(self, user_query: str):
+        self._log_and_notify("Sending request to Ollama...")
+        parsed_json, error_message, diagnostic_message, raw_ollama_response = self.llm_service.get_commands(user_query)
+        self._log_and_notify("Received response from Ollama.")
+        self._log_and_notify(diagnostic_message)
+        self._log_and_notify(f"Raw Ollama Response: {raw_ollama_response}")
+        return parsed_json, error_message
+
+    def _handle_llm_success(self, parsed_json):
+        self.commands = "\n".join(parsed_json.get("commands", []))
+        self.explanation = parsed_json.get("explanation", "No explanation provided.")
+        self.query_one("#commands_display", TextArea).text = self.commands
+        self.query_one("#explanation_display", TextArea).text = self.explanation
+
+    def _handle_llm_error(self, error_message):
+        self.commands = ""
+        self.explanation = error_message
+        self.query_one("#commands_display", TextArea).text = "Error or unexpected response."
+        self.query_one("#explanation_display", TextArea).text = f"Details: {error_message}"
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id == "command_input":
             user_query = event.value
             if user_query:
-                self._log_and_notify("Sending request to Ollama...")
-                parsed_json, error_message, diagnostic_message, raw_ollama_response = self.llm_service.get_commands(user_query)
-                self._log_and_notify("Received response from Ollama.")
-                self._log_and_notify(diagnostic_message)
-                self._log_and_notify(f"Raw Ollama Response: {raw_ollama_response}")
-
+                parsed_json, error_message = self._call_llm_service(user_query)
                 if parsed_json:
-                    self.commands = "\n".join(parsed_json.get("commands", []))
-                    self.explanation = parsed_json.get("explanation", "No explanation provided.")
-                    self.query_one("#commands_display", TextArea).text = self.commands
-                    self.query_one("#explanation_display", TextArea).text = self.explanation
+                    self._handle_llm_success(parsed_json)
                 else:
-                    self.commands = ""
-                    self.explanation = error_message
-                    self.query_one("#commands_display", TextArea).text = "Error or unexpected response."
-                    self.query_one("#explanation_display", TextArea).text = f"Details: {error_message}"
-
+                    self._handle_llm_error(error_message)
+                
                 self.query_one("#commands_display").focus()
                 self.query_one("#command_input", Input).clear()
 
