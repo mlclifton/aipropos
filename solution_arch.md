@@ -8,6 +8,7 @@ The purpose of this solution, as described in `spec.md`, is to provide a command
 - Displays the generated commands and their explanations in separate text areas.
 - Copies the selected commands to the clipboard upon pressing Enter.
 - Is written in Python using the Textual framework.
+- Includes a log viewer for diagnostics.
 
 ## How the Solution Works
 
@@ -19,14 +20,21 @@ The solution consists of two main Python components: `main.py` which implements 
     *   It sets up the TUI layout with input and output text areas using `textual.widgets.Input`, `textual.widgets.TextArea`, and `textual.containers.Container`.
     *   It handles user input, specifically the "Enter" key press in the command input area, to trigger the LLM call.
     *   It displays the commands and explanations received from the `LLMService`.
-    *   It provides key bindings for quitting the application (`q`) and copying commands to the clipboard (`c`).
+    *   It provides key bindings for quitting the application (`q`), copying commands to the clipboard (`c`), and showing a log viewer (`l`).
     *   It uses `pyperclip` for clipboard operations.
+    *   It includes a `LogViewer` class to display diagnostic logs within the TUI.
 
 *   **`llm_service.py`**: This file defines the `LLMService` class, responsible for interacting with the Large Language Model.
     *   It loads the Ollama API URL and model name from environment variables using `dotenv`.
-    *   The `get_commands` method now makes an actual API call to the configured Ollama instance, sending the user's natural language query and a system prompt. It then parses the Ollama's response to extract the generated commands and their explanations, handling various error conditions.
+    *   The `get_commands` method makes an API call to the configured Ollama instance, sending the user's natural language query and a system prompt.
+    *   It parses the JSON object from the Ollama response to extract the generated commands and their explanations.
+    *   It includes robust error handling for API communication and JSON decoding issues.
 
 *   **`tui_app.css`**: This CSS file styles the Textual application, defining the appearance of containers and text areas.
+
+*   **`requirements.txt`**: This file lists the Python dependencies for the project, such as `textual`, `python-dotenv`, `ollama`, and `pyperclip`.
+
+*   **`package.json`**: This file lists the Node.js dependencies for the project, which are development tools like `stylelint` for CSS linting.
 
 ### Mermaid Diagrams
 
@@ -37,9 +45,14 @@ graph TD
     A[main.py] --> B[llm_service.py]
     A --> C[tui_app.css]
     A --> D[pyperclip]
+    A --> J[datetime]
     B --> E[os]
     B --> F[dotenv]
     B --> G[ollama]
+    B --> K[json]
+    H[requirements.txt] --> A
+    H --> B
+    I[package.json] --> C
 ```
 
 #### Class Associations
@@ -47,7 +60,9 @@ graph TD
 ```mermaid
 classDiagram
     TUIApp "1" *-- "1" LLMService
+    TUIApp "1" *-- "0..1" LogViewer
     TUIApp --|> App
+    LogViewer --|> TextArea
     LLMService --|> object
 ```
 
@@ -55,9 +70,29 @@ classDiagram
 
 ```mermaid
 graph TD
-    A[textual] --> B[main.py]
-    C[pyperclip] --> B
-    D[dotenv] --> E[llm_service.py]
-    F[os] --> E
-    G[ollama] --> E
+    subgraph Python Dependencies
+        direction LR
+        P1[textual]
+        P2[pyperclip]
+        P3[python-dotenv]
+        P4[ollama]
+    end
+
+    subgraph Node.js Dependencies
+        direction LR
+        N1[stylelint]
+    end
+
+    subgraph Application
+        direction LR
+        M[main.py]
+        L[llm_service.py]
+        T[tui_app.css]
+    end
+
+    P1 --> M
+    P2 --> M
+    P3 --> L
+    P4 --> L
+    N1 --> T
 ```
