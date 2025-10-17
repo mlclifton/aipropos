@@ -34,6 +34,14 @@ The utility shall integrate with an LLM API to:
 ### 3.4 Clipboard Functionality
 *   Pressing the "Enter" key while the generated commands display is focused shall copy the displayed commands to the system clipboard.
 
+### 3.5 System Prompt Profiles
+
+To provide more targeted assistance, the utility will support selectable "system prompt profiles".
+
+*   **Invocation**: The user can select a profile by providing its name as the first command-line argument (e.g., `txtui-tool git`).
+*   **Configuration**: Profiles will be defined in a simple plain text file (`prompts.txt`). Each profile consists of a name (e.g., `[linux]`, `[git]`) followed by the system prompt text.
+*   **Default Profile**: A `[default]` profile must be present in the configuration file. This profile will be used if no argument is provided or if the specified profile name does not exist.
+
 ## 4. Technology Stack
 
 *   **Language**: Python
@@ -89,3 +97,11 @@ The utility shall integrate with an LLM API to:
 *   3.3 LLM Integration (Send query, Receive/Parse response)
 *   3.4 Clipboard Functionality
 *   5. Non-Functional Requirements (Performance, Usability)
+
+### UC-06: Use a Specific System Prompt Profile
+**Description**: A user needs help with a `git` command and wants suggestions specifically tailored for version control operations.
+**Features Required**:
+*   3.1 Command Line Invocation
+*   3.5 System Prompt Profiles
+*   3.2 Text-based User Interface (Input Text Box, Generated Commands Display)
+*   3.3 LLM Integration
