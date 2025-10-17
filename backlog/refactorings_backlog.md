@@ -25,13 +25,3 @@
 **Benefit:** The `logging` module is a powerful and standard way to handle logging in Python applications. It provides features like different log levels (e.g., `INFO`, `DEBUG`, `ERROR`), the ability to configure different log handlers (e.g., writing to a file or the console), and customizable log formats.
 
 **Potential Problem:** The current implementation stores all log messages in memory. For a long-running application, this could lead to high memory consumption. It also lacks the flexibility to, for example, only show `ERROR` level messages in production while showing more verbose `DEBUG` messages during development.
-
----
-
-# REFACTOR_04: Break Down Large Methods in `main.py`
-
-**Recommendation:** The `on_input_submitted` method contains a significant amount of logic: it calls the LLM service, logs various messages, and then updates the UI based on whether the call was successful or not. This method could be broken down into smaller, more focused methods.
-
-**Benefit:** Smaller methods, each with a single responsibility, are easier to read, understand, and test. For example, you could have separate methods for handling a successful response and an error response.
-
-**Potential Problem:** As more features are added, this method is likely to grow, increasing its complexity and making it harder to maintain and debug. For instance, if you wanted to add a "loading" indicator, you would have to add more logic to this already large method.
