@@ -52,6 +52,7 @@ class TUIApp(App):
                 self._handle_llm_success(parsed_json)
             else:
                 self._handle_llm_error(error_message)
+            self.query_one("#commands_display").focus()
 
     def _log_and_notify(self, message: str) -> None:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
