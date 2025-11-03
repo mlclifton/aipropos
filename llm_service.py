@@ -32,6 +32,13 @@ class LLMService:
             
         return prompts
 
+    @staticmethod
+    def save_prompts(filepath: str, prompts: dict) -> None:
+        with open(filepath, 'w') as f:
+            for profile, prompt in prompts.items():
+                f.write(f"[{profile}]\n")
+                f.write(prompt + "\n\n")
+
     def get_commands(self, prompt: str) -> tuple[dict | None, str, str, str]:
         try:
             client = ollama.Client(host=self.ollama_api_base_url)

@@ -109,6 +109,11 @@ if __name__ == "__main__":
         action="store_true",
         help="List available profiles from prompts.txt and exit."
     )
+    parser.add_argument(
+        "--edit",
+        action="store_true",
+        help="Edit the specified profile's prompt."
+    )
     args = parser.parse_args()
 
     prompts = LLMService.load_prompts('prompts.txt')
@@ -117,6 +122,17 @@ if __name__ == "__main__":
         print("Available profiles:")
         for profile in prompts:
             print(f"- {profile}")
+        sys.exit(0)
+
+    if args.edit:
+        from prompt_editor import PromptEditorApp
+        if args.profile not in prompts:
+            print(f"Error: Profile '{args.profile}' not found in prompts.txt.")
+            sys.exit(1)
+        app = PromptEditorApp(profile=args.profile, prompts=prompts)
+        result = app.run()
+        if result:
+            print(result)
         sys.exit(0)
 
     system_prompt = prompts.get(args.profile, prompts["default"])
