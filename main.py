@@ -20,15 +20,16 @@ class LogViewer(TextArea):
 
 class TUIApp(App):
     CSS_PATH = "tui_app.css"
-    BINDINGS = [("q", "quit", "Quit"), ("c", "copy_commands", "Copy Commands"), ("l", "show_logs", "Show Logs")]
+    BINDINGS = [("q", "quit", "Quit"), ("c", "copy_commands", "Copy Commands"), ("l", "show_logs", "Show Logs"), ("n", "toggle_notifications", "Toggle Notifications")]
 
-    def __init__(self, system_prompt: str, initial_query: str = None):
+    def __init__(self, system_prompt: str, initial_query: str = None, notify_on: bool = False):
         super().__init__()
         self.llm_service = LLMService(system_prompt=system_prompt)
         self.commands = var("")
         self.explanation = var("")
         self.log_messages = [] # Stores (timestamp, message) tuples
         self.initial_query = initial_query
+        self.notify_on = notify_on
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -57,7 +58,8 @@ class TUIApp(App):
     def _log_and_notify(self, message: str) -> None:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.log_messages.append((timestamp, message))
-        self.notify(f"[{timestamp}] {message}")
+        if self.notify_on:
+            self.notify(f"[{timestamp}] {message}")
 
     def _call_llm_service(self, user_query: str):
         self._log_and_notify("Sending request to Ollama...")
@@ -109,6 +111,10 @@ class TUIApp(App):
             pyperclip.copy(self.commands)
             self.notify("Commands copied to clipboard!")
 
+    def action_toggle_notifications(self) -> None:
+        self.notify_on = not self.notify_on
+        self.notify(f"Notifications {'enabled' if self.notify_on else 'disabled'}.")
+
     def action_quit(self) -> None:
         self.exit()
 
@@ -138,6 +144,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Edit the specified profile's prompt."
     )
+    parser.add_argument(
+        "--notify-on",
+        action="store_true",
+        help="Enable notifications."
+    )
     args = parser.parse_args()
 
     prompts = LLMService.load_prompts('prompts.txt')
@@ -161,5 +172,5 @@ if __name__ == "__main__":
 
     system_prompt = prompts.get(args.profile, prompts["default"])
     
-    app = TUIApp(system_prompt=system_prompt, initial_query=args.query)
+    app = TUIApp(system_prompt=system_prompt, initial_query=args.query, notify_on=args.notify_on)
     app.run()
