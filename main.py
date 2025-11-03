@@ -22,12 +22,13 @@ class TUIApp(App):
     CSS_PATH = "tui_app.css"
     BINDINGS = [("q", "quit", "Quit"), ("c", "copy_commands", "Copy Commands"), ("l", "show_logs", "Show Logs")]
 
-    def __init__(self, system_prompt: str):
+    def __init__(self, system_prompt: str, initial_query: str = None):
         super().__init__()
         self.llm_service = LLMService(system_prompt=system_prompt)
         self.commands = var("")
         self.explanation = var("")
         self.log_messages = [] # Stores (timestamp, message) tuples
+        self.initial_query = initial_query
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -36,6 +37,21 @@ class TUIApp(App):
             yield TextArea(placeholder="Generated Commands", id="commands_display", read_only=True)
             yield TextArea(placeholder="Explanation", id="explanation_display", read_only=True)
         yield Footer()
+
+    async def on_mount(self) -> None:
+        self._log_and_notify("TUIApp mounted.")
+        if self.initial_query:
+            self._log_and_notify(f"Initial query: {self.initial_query}")
+            query_input = self.query_one("#command_input", Input)
+            query_input.value = self.initial_query
+
+            worker = self.run_worker(lambda: self._call_llm_service(self.initial_query), thread=True)
+            parsed_json, error_message = await worker.wait()
+            
+            if parsed_json:
+                self._handle_llm_success(parsed_json)
+            else:
+                self._handle_llm_error(error_message)
 
     def _log_and_notify(self, message: str) -> None:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -51,8 +67,11 @@ class TUIApp(App):
         return parsed_json, error_message
 
     def _handle_llm_success(self, parsed_json):
+        self._log_and_notify("Handling LLM success.")
         self.commands = "\n".join(parsed_json.get("commands", []))
         self.explanation = parsed_json.get("explanation", "No explanation provided.")
+        self._log_and_notify(f"Commands: {self.commands}")
+        self._log_and_notify(f"Explanation: {self.explanation}")
         self.query_one("#commands_display", TextArea).text = self.commands
         self.query_one("#explanation_display", TextArea).text = self.explanation
 
@@ -98,8 +117,12 @@ if __name__ == "__main__":
                     "Specify the Ollama model via the OLLAMA_MODEL_NAME environment variable."
     )
     parser.add_argument(
-        "profile",
+        "query",
         nargs="?",
+        help="The user's query. If provided, the app will run in CLI mode."
+    )
+    parser.add_argument(
+        "--profile",
         default="default",
         help="The profile to use from prompts.txt (e.g., 'default', 'git'). "
              "Defaults to 'default' if not specified."
@@ -137,5 +160,5 @@ if __name__ == "__main__":
 
     system_prompt = prompts.get(args.profile, prompts["default"])
     
-    app = TUIApp(system_prompt=system_prompt)
+    app = TUIApp(system_prompt=system_prompt, initial_query=args.query)
     app.run()
