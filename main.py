@@ -10,13 +10,17 @@ import sys
 import argparse
 
 class LogViewer(TextArea):
-    BINDINGS = [("escape", "hide_logs", "Hide Logs")]
+    BINDINGS = [("escape", "hide_logs", "Hide Logs"), ("c", "copy_logs", "Copy Logs")]
 
     def on_mount(self) -> None:
         self.focus()
 
     def action_hide_logs(self) -> None:
         self.remove()
+
+    def action_copy_logs(self) -> None:
+        pyperclip.copy(self.text)
+        self.notify("Logs copied to clipboard!")
 
 class TUIApp(App):
     CSS_PATH = "tui_app.css"
@@ -65,6 +69,7 @@ class TUIApp(App):
 
     def _call_llm_service(self, user_query: str):
         self.last_query = user_query
+        self._log_and_notify(f"Sending query to Ollama: {user_query}")
         self._log_and_notify("Sending request to Ollama...")
         parsed_json, error_message, diagnostic_message, raw_ollama_response = self.llm_service.get_commands(user_query)
         self._log_and_notify("Received response from Ollama.")
@@ -74,7 +79,13 @@ class TUIApp(App):
 
     def _handle_llm_success(self, parsed_json):
         self._log_and_notify("Handling LLM success.")
-        self.commands = "\n".join(parsed_json.get("commands", []))
+        
+        command = parsed_json.get("command")
+        if isinstance(command, str):
+            self.commands = command
+        else:
+            self.commands = ""
+
         self.explanation = parsed_json.get("explanation", "No explanation provided.")
         self._log_and_notify(f"Commands: {self.commands}")
         self._log_and_notify(f"Explanation: {self.explanation}")
@@ -87,11 +98,12 @@ class TUIApp(App):
         self.query_one("#commands_display", TextArea).text = "Error or unexpected response."
         self.query_one("#explanation_display", TextArea).text = f"Details: {error_message}"
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id == "command_input":
             user_query = event.value
             if user_query:
-                parsed_json, error_message = self._call_llm_service(user_query)
+                worker = self.run_worker(lambda: self._call_llm_service(user_query), thread=True)
+                parsed_json, error_message = await worker.wait()
                 if parsed_json:
                     self._handle_llm_success(parsed_json)
                 else:
