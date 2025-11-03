@@ -6,6 +6,8 @@ from textual.events import Key
 from llm_service import LLMService
 import pyperclip
 from datetime import datetime
+import sys
+import argparse
 
 class LogViewer(TextArea):
     BINDINGS = [("escape", "hide_logs", "Hide Logs")]
@@ -20,10 +22,12 @@ class TUIApp(App):
     CSS_PATH = "tui_app.css"
     BINDINGS = [("q", "quit", "Quit"), ("c", "copy_commands", "Copy Commands"), ("l", "show_logs", "Show Logs")]
 
-    llm_service = LLMService()
-    commands = var("")
-    explanation = var("")
-    log_messages = [] # Stores (timestamp, message) tuples
+    def __init__(self, system_prompt: str):
+        super().__init__()
+        self.llm_service = LLMService(system_prompt=system_prompt)
+        self.commands = var("")
+        self.explanation = var("")
+        self.log_messages = [] # Stores (timestamp, message) tuples
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -89,5 +93,33 @@ class TUIApp(App):
         self.exit()
 
 if __name__ == "__main__":
-    app = TUIApp()
+    parser = argparse.ArgumentParser(
+        description="Text-based User Interface (TUI) for interacting with Ollama. "
+                    "Specify the Ollama model via the OLLAMA_MODEL_NAME environment variable."
+    )
+    parser.add_argument(
+        "profile",
+        nargs="?",
+        default="default",
+        help="The profile to use from prompts.txt (e.g., 'default', 'git'). "
+             "Defaults to 'default' if not specified."
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List available profiles from prompts.txt and exit."
+    )
+    args = parser.parse_args()
+
+    prompts = LLMService.load_prompts('prompts.txt')
+
+    if args.list:
+        print("Available profiles:")
+        for profile in prompts:
+            print(f"- {profile}")
+        sys.exit(0)
+
+    system_prompt = prompts.get(args.profile, prompts["default"])
+    
+    app = TUIApp(system_prompt=system_prompt)
     app.run()

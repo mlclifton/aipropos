@@ -6,24 +6,31 @@ import ollama
 load_dotenv()
 
 class LLMService:
-    def __init__(self):
+    def __init__(self, system_prompt: str):
         self.ollama_api_base_url = os.getenv("OLLAMA_API_BASE_URL", "http://localhost:11434")
         self.ollama_model_name = os.getenv("OLLAMA_MODEL_NAME", "gemma3:4b")
-        self.system_prompt = (
-            "You are an expert Linux development assistant. "
-            "When a user asks for a command, you must respond with a JSON object. "
-            "The JSON object should have three keys: 'request', 'commands', and 'explanation'. "
-            "'request' should contain the user's original request. "
-            "'commands' should contain a list of suggested commands. "
-            "'explanation' should contain a clear and concise explanation of the commands. "
-            "Do not include any conversational filler or extra text. "
-            "For example: \n"
-            """{
-  "request": "list all files in the current directory",
-  "commands": ["ls -l"],
-  "explanation": "'ls -l' lists files and directories in long format, showing permissions, owner, size, and modification date."
-}"""
-        )
+        self.system_prompt = system_prompt
+
+    @staticmethod
+    def load_prompts(filepath: str) -> dict:
+        prompts = {}
+        current_profile = None
+        with open(filepath, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('[') and line.endswith(']'):
+                    current_profile = line[1:-1]
+                    prompts[current_profile] = ""
+                elif current_profile and line:
+                    prompts[current_profile] += line + "\n"
+        
+        for profile, prompt in prompts.items():
+            prompts[profile] = prompts[profile].strip()
+
+        if 'default' not in prompts:
+            raise ValueError("The '[default]' profile is missing from the prompts file.")
+            
+        return prompts
 
     def get_commands(self, prompt: str) -> tuple[dict | None, str, str, str]:
         try:
