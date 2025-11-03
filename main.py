@@ -20,7 +20,7 @@ class LogViewer(TextArea):
 
 class TUIApp(App):
     CSS_PATH = "tui_app.css"
-    BINDINGS = [("q", "quit", "Quit"), ("c", "copy_commands", "Copy Commands"), ("l", "show_logs", "Show Logs"), ("n", "toggle_notifications", "Toggle Notifications")]
+    BINDINGS = [("q", "quit", "Quit"), ("c", "copy_commands", "Copy Commands"), ("l", "show_logs", "Show Logs"), ("n", "toggle_notifications", "Toggle Notifications"), ("r", "resend_query", "Resend Query")]
 
     def __init__(self, system_prompt: str, initial_query: str = None, notify_on: bool = False):
         super().__init__()
@@ -30,6 +30,7 @@ class TUIApp(App):
         self.log_messages = [] # Stores (timestamp, message) tuples
         self.initial_query = initial_query
         self.notify_on = notify_on
+        self.last_query = ""
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -42,6 +43,7 @@ class TUIApp(App):
     async def on_mount(self) -> None:
         self._log_and_notify("TUIApp mounted.")
         if self.initial_query:
+            self.last_query = self.initial_query
             self._log_and_notify(f"Initial query: {self.initial_query}")
             query_input = self.query_one("#command_input", Input)
             query_input.value = self.initial_query
@@ -62,6 +64,7 @@ class TUIApp(App):
             self.notify(f"[{timestamp}] {message}")
 
     def _call_llm_service(self, user_query: str):
+        self.last_query = user_query
         self._log_and_notify("Sending request to Ollama...")
         parsed_json, error_message, diagnostic_message, raw_ollama_response = self.llm_service.get_commands(user_query)
         self._log_and_notify("Received response from Ollama.")
@@ -114,6 +117,17 @@ class TUIApp(App):
     def action_toggle_notifications(self) -> None:
         self.notify_on = not self.notify_on
         self.notify(f"Notifications {'enabled' if self.notify_on else 'disabled'}.")
+
+    def action_resend_query(self) -> None:
+        if self.last_query:
+            self.run_worker(lambda: self._call_llm_service_and_handle(self.last_query), thread=True)
+
+    def _call_llm_service_and_handle(self, query: str) -> None:
+        parsed_json, error_message = self._call_llm_service(query)
+        if parsed_json:
+            self.call_from_thread(self._handle_llm_success, parsed_json)
+        else:
+            self.call_from_thread(self._handle_llm_error, error_message)
 
     def action_quit(self) -> None:
         self.exit()
